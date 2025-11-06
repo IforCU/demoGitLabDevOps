@@ -1,0 +1,30 @@
+# .github/workflows/mirror-to-gitlab.yml
+name: Mirror to GitLab
+
+on:
+  push:
+    branches:
+      - main  # main 브랜치에 푸시될 때만 실행됩니다.
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 모든 히스토리를 가져옵니다.
+
+      - name: Push to GitLab
+        env:
+          GITLAB_URL: ${{ secrets.GITLAB_URL }}
+          GITLAB_ACCESS_TOKEN: ${{ secrets.GITLAB_ACCESS_TOKEN }}
+        run: |
+          # GitLab URL에 사용자 이름과 토큰을 포함하여 인증합니다.
+          # 예: https://oauth2:TOKEN@gitlab.com/user/repo.git
+          GITLAB_REPO_URL=$(echo "$GITLAB_URL" | sed "s|://|://oauth2:$GITLAB_ACCESS_TOKEN@|")
+          
+          echo "Pushing to GitLab repository..."
+          git push --force --all "$GITLAB_REPO_URL"
+          git push --force --tags "$GITLAB_REPO_URL"
+          echo "Successfully pushed to GitLab."
